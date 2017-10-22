@@ -1,5 +1,5 @@
-#ifndef SORTER_H
-#define SORTER_H
+#ifndef _SORTER_H
+#define _SORTER_H
 /*
  * sorts the file with name "infile"
  * by the fields listed in "fieldlist"
