@@ -5,5 +5,5 @@
  * by the fields listed in "fieldlist"
  * and outputs the result in the directory "dirname"
  */
-void sort_csv(char *infile, char *fieldlist, char *dirname);
+int sort_csv(char *infile, char *fieldlist, char *dirname);
 #endif

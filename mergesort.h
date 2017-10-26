@@ -1,13 +1,7 @@
 #ifndef _MERGESORT_H
 #define _MERGESORT_H
 
-void column_count(char *str, int *column);
-void matrix_free(int row, int column, struct record **matrix);
-void matrix_enlarge(int row, int column, struct record **matrix);
-char **feature_name;
-int feature_num;
-struct record **record_table;
-int row_counter;
-void print_table();
-void sort_by_field(const char *field_name);
+int read_csv(char ****table, char ***header, char *ifname, char **field_strings, int *field_indices, int *num_rows, int *num_cols, int num_fields);
+int sort_by_field(char ***table, int num_rows, int num_cols, int field_index);
+int print_table(char ***table, char **header, int num_rows, int num_cols, char *ofname);
 #endif

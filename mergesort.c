@@ -4,57 +4,44 @@
 #include <ctype.h>
 #include <math.h>
 #include <stdbool.h>
-#include "sorter.h"
-int compare(struct record a, struct record b);
+#include "mergesort.h"
+int compare(char *a, char *b);
 int lexcmp(char *a, int alen, char *b, int blen);
 int charcmp(char a, char b);
 int strbegin(char *str);
 int strend(char *str);
 int min(int a, int b);
-void sort_by_field(const char *field_name)
+int sort_by_field(char ***table, int num_rows, int num_cols, int field_index)
 {
-	int field_index;
 	int *end;
 	int *pa, *pb, *ptmp;
 	int low, middle, high;
 	int i, j;
-	struct record *a, *b, *tmp;
+	char **a, **b, **tmp;
 	int ind;
 	/* performs a bottom-up mergesort on the table */
-	/* find the column number for comparisons */
-	field_index = -1;
-	for (i = 0; i < feature_num; i++) {
-		if (strcmp(feature_name[i], field_name) == 0) {
-			field_index = i;
-			break;
-		}
-	}
-	if (field_index == -1) {
-		fprintf(stderr, "could not find column name %s\n", field_name);
-		return;
-	}
 	/* find already sorted regions */
-	end = malloc(row_counter * sizeof(*end));
-	pa = malloc(row_counter * sizeof(*pa));
-	pb = malloc(row_counter * sizeof(*pb));
-	for (i = 0; i < row_counter; i++) {
+	end = malloc(num_rows * sizeof(*end));
+	pa = malloc(num_rows * sizeof(*pa));
+	pb = malloc(num_rows * sizeof(*pb));
+	for (i = 0; i < num_rows; i++) {
 		pa[i] = i;
 		pb[i] = i;
 	}
 	j = 0;
-	for (i = 1; i < row_counter; i++) {
-		if (compare(record_table[field_index][i - 1], record_table[field_index][i]) > 0) {
+	for (i = 1; i < num_rows; i++) {
+		if (compare(table[field_index][i - 1], table[field_index][i]) > 0) {
 			end[j] = i;
 			j = i;
 		}
 	}
-	end[j] = row_counter;
+	end[j] = num_rows;
 	/* begin actual mergesort */
-	a = record_table[field_index];
-	b = malloc(row_counter * sizeof(*b));
-	memcpy(b, a, row_counter * sizeof(*a));
+	a = table[field_index];
+	b = malloc(num_rows * sizeof(*b));
+	memcpy(b, a, num_rows * sizeof(*a));
 	ind = 0;
-	while (end[0] != row_counter) {
+	while (end[0] != num_rows) {
 		low = ind;
 		middle = end[ind];
 		high = end[middle];
@@ -86,9 +73,9 @@ void sort_by_field(const char *field_name)
 			j++;
 		}
 		end[low] = high;
-		if (high == row_counter || end[high] == row_counter) {
+		if (high == num_rows || end[high] == num_rows) {
 			/* reset ind to 0, then swap a and b */
-			for (; ind < row_counter; ind++)
+			for (; ind < num_rows; ind++)
 				b[ind] = a[ind];
 			ind = 0;
 			tmp = a;
@@ -99,27 +86,28 @@ void sort_by_field(const char *field_name)
 			pb = ptmp;
 		}
 	}
-	if (record_table[field_index] != a) {
-		record_table[field_index] = a;
+	if (table[field_index] != a) {
+		table[field_index] = a;
 	}
 	/* replicate changes to sorted column in all other columns */
-	tmp = malloc(row_counter * sizeof(*tmp));
-	for (i = 0; i < feature_num; i++) {
+	tmp = malloc(num_rows * sizeof(*tmp));
+	for (i = 0; i < num_cols; i++) {
 		if (i == field_index)
 			continue;
-		for (j = 0; j < row_counter; j++)
-			tmp[j] = record_table[i][pa[j]];
-		for (j = 0; j < row_counter; j++)
-			record_table[i][j] = tmp[j];
+		for (j = 0; j < num_rows; j++)
+			tmp[j] = table[i][pa[j]];
+		for (j = 0; j < num_rows; j++)
+			table[i][j] = tmp[j];
 	}
 	free(end);
 	free(b);
 	free(tmp);
 	free(pa);
 	free(pb);
+	return 0;
 }
 
-int compare(struct record a, struct record b)
+int compare(char *a, char *b)
 {
 	double ad, bd;
 	bool ac, bc;
@@ -128,10 +116,10 @@ int compare(struct record a, struct record b)
 	int alen, blen;
 	bool aempty, bempty;
 	char *endptr;
-	ab = strbegin(a.string);
-	ae = strend(a.string);
-	bb = strbegin(b.string);
-	be = strend(b.string);
+	ab = strbegin(a);
+	ae = strend(a);
+	bb = strbegin(b);
+	be = strend(b);
 	alen = ae - ab + 1;
 	blen = be - bb + 1;
 	aempty = (alen <= 0);
@@ -145,11 +133,11 @@ int compare(struct record a, struct record b)
 	} else {
 		ac = false;
 		bc = false;
-		ad = strtod(a.string + ab, &endptr);
-		if (endptr == a.string + ae + 1)
+		ad = strtod(a + ab, &endptr);
+		if (endptr == a + ae + 1)
 			ac = true;
-		bd = strtod(b.string + bb, &endptr);
-		if (endptr == b.string + be + 1)
+		bd = strtod(b + bb, &endptr);
+		if (endptr == b + be + 1)
 			bc = true;
 		if (ac && bc) {
 			if (fabs(ad - bd) < 0.0001)
@@ -163,7 +151,7 @@ int compare(struct record a, struct record b)
 		} else if (bc) {
 			return 1;
 		} else {
-			return lexcmp(a.string + ab, alen, b.string+ bb, blen);
+			return lexcmp(a + ab, alen, b+ bb, blen);
 		}
 	}
 }

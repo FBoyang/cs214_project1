@@ -1,39 +1,42 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "sorter.h"
+#include "mergesort.h"
 int escaped(char *str);
-void print_table()
+int print_table(char ***table, char **header, int num_rows, int num_cols, char *ofname)
 {
 	int i, j;
 	char *str;
-	/* print the sorted csv file */
-	for (i = 0; i < feature_num; i++) {
-		str = feature_name[i];
-		if (escaped(str))
-			fprintf(stdout, "\"%s\"", str);
-		else
-			fputs(str, stdout);
-		if (i == feature_num - 1)
-			break;
-		fputc(',', stdout);
+	FILE *outfile;
+	if ((outfile = fopen(ofname, "w")) == NULL) {
+		fprintf(stderr, "failed to open file \"%s\"\n", ofname);
+		return 1;
 	}
-	fputs("\r\n", stdout);
-	for (i = 0; i < row_counter; i++) {
-		for (j = 0; j < feature_num; j++) {
-			str = record_table[j][i].string;
+	/* print the sorted csv file */
+	for (i = 0; i < num_cols; i++) {
+		fputs(header[i], outfile);
+		if (i == num_cols - 1)
+			break;
+		fputc(',', outfile);
+	}
+	fputs("\r\n", outfile);
+	for (i = 0; i < num_rows; i++) {
+		for (j = 0; j < num_cols; j++) {
+			str = table[j][i];
 			if (str) {
 				if (escaped(str))
-					fprintf(stdout, "\"%s\"", str);
+					fprintf(outfile, "\"%s\"", str);
 				else
-					fputs(str, stdout);
+					fputs(str, outfile);
 			}
-			if (j == feature_num - 1)
+			if (j == num_cols - 1)
 				break;
-			fputc(',', stdout);
+			fputc(',', outfile);
 		}
-		fputs("\r\n", stdout);
+		fputs("\r\n", outfile);
 	}
+	return 0;
 }
 
 int escaped(char *str)
