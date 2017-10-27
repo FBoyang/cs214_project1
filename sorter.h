@@ -8,7 +8,7 @@
  * and outputs the result in the directory "dirname"
  * out_path is the path to which the sorted csv should be put
  */
-void sort_csv(char *infile, char fieldlist[32][128], char *dirname, char *out_path);
+void sort_csv(char *infile, char fieldlist, char *out_path);
 /*
  * navigation function serves as the function to recursively traverse the directroies, 
  * first argument name is the start directory from which we begin to search. The function
@@ -17,9 +17,8 @@ void sort_csv(char *infile, char fieldlist[32][128], char *dirname, char *out_pa
  * go to the next directory and do the same procedure again.
  * if no sub directory in the current directory, stop fork after sorting the csv file.
  */
-int sort_num;
-char sort_list[32][128];
 int navigation(char *input_path, char* output_path);
 int process_num;
+char *field_name;
 pid_t ini_pid;
 #endif

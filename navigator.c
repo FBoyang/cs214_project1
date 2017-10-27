@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<dirent.h>
 #include<string.h>
+#include<getopt.h>
 #include<unistd.h>
 #include"sorter.h"
 
@@ -53,20 +54,10 @@ int navigation(char *name, char *output_path){
 						if(pid == 0){
 						
 						//check the csv file 
-							char outfile[128];
-							strncpy(outfile, entry -> d_name, strlen(entry -> d_name) - 4); //remove the .csv postfix
-
-							strcat(outfile, "-sorted");						
-							int i;
-							for (i = 0; i < sort_num; i++){
-								strcat(outfile, "-");
-								strcat(outfile, sort_list[i]);
-							}
-							strcat(outfile, ".csv");
+													
+						//sort_csv(entry -> d_name, field_name, NULL, output_path); 
 							
-							//sort_csv(entry -> d_name, sort_list, outfile, output_path); 
-							
-							_exit(1);
+						_exit(1);
 						}
 						else if(pid > 0){
 							t_pid[counter -1] = pid;
@@ -100,14 +91,9 @@ int navigation(char *name, char *output_path){
 
 							_exit(1);
 						}
-
-
 					}
 				}
-
-			}
-						
-
+			}		
 		}
 
 		
@@ -137,10 +123,11 @@ int main(int argc, char** argv){
 	int status;
 	int i;
 	int c = 0;
-	int d = 0;
-	int o = 0;
+	int cflag = 0;
+	int oflag = 0;
+	int dflag = 0;
 
-	for(i = 1; i < argc; i++){
+	/*for(i = 1; i < argc; i++){
 		if(strcmp(argv[i], "-c") == 0){
 			c= i;
 		}
@@ -153,26 +140,46 @@ int main(int argc, char** argv){
 		else{
 			continue;
 		}
-	}
-	
-	for( i = c + 1; i < argc; i++){
-		if((strcmp(argv[i], "-d") == 0)||(strcmp(argv[i], "-o") == 0)){
+	}*/
+	char input_path[1024];
+	char *output_path;
+	getcwd( input_path, 1024);		
+	while((c = getopt (argc, argv, "c: d: o:")) != -1){
+		switch (c)
+		{
+		case 'c':
+			cflag = 1;
+			field_name = optarg;
+			break;
+		case 'd':
+			dflag = 1;
+			if (optarg == NULL){
+				fprintf(stderr, "no start path\n");
+				exit(1);
+			}
+			strcpy(input_path, optarg);
+			break;
+		case 'o':
+			oflag = 1;
+			if (optarg == NULL){
+				fprintf(stderr, "no output path\n");
+				exit(1);
+			}
+			output_path = optarg;
+			break;
+		case '?':
+			fprintf(stderr, "Unknown option\n");
+			exit(1);
 			break;
 		}
-		else{
-			strcpy(sort_list[i -c -1], argv[i]);
-		}
+	}	 
+	if(cflag == 0 || argc < 3){
+		fprintf(stderr, "wrong argument\n");
+		exit(1);
 	}
-	sort_num = i - c - 1;		
 	process_num = 0;
-	char input_path[1024];
-	if(d == 0){
 		// use default path	
-		getcwd( input_path, 1024);		
-	}
-	else{
-		strcpy(input_path, argv[d+1]);
-	}
+	
 	pid_t pid; 
 	//initialize the process number
 	pid = fork();
@@ -181,12 +188,12 @@ int main(int argc, char** argv){
 		printf("Initial PID: %d\n", ini_pid);
 		fprintf(stdout,"PIDS of all child processes:");
 		fflush(stdout);
-		if(o == 0){
+		if(oflag == 0){
 			// output to the default directory
 			process_num = navigation(input_path, NULL);
 		}
 		else{
-			process_num = navigation(input_path, argv[o+1]);
+			process_num = navigation(input_path, output_path);
 		}
 		printf("\n");
 		_exit(process_num);
