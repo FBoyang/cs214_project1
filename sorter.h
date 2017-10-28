@@ -17,7 +17,7 @@ void sort_csv(char *infile, char fieldlist, char *out_path);
  * go to the next directory and do the same procedure again.
  * if no sub directory in the current directory, stop fork after sorting the csv file.
  */
-int navigation(char *input_path, char* output_path);
+int navigation(char *input_path, char* output_path, FILE *ptr);
 int process_num;
 char *field_name;
 pid_t ini_pid;

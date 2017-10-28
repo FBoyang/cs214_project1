@@ -18,83 +18,91 @@
  */
 
 
-int navigation(char *name, char *output_path){
+int navigation(char *name, char *output_path, FILE *ptr){
 	DIR *dir;
 	pid_t t_pid[256];
 	struct dirent *entry;
 	int status;
+	int process_num =0;
 	int counter = 0;
 	pid_t pid = 0; 
+	pid_t ppid = 0;
 
 
-		int i;
-		for (i = 0; i < 32; i++){
-			t_pid[i] = 0;
-		}
+	int i ;
+	for (i = 0; i < 32; i++){
+		t_pid[i] = 0;
+	}
 
 		
 	
 	
-		if( !(dir = opendir(name) )){
-			printf("\ndirectory name is %s\n", name);
-			fprintf(stderr, "no such directory exist\n");
-			exit(0);
-		}
+	if( !(dir = opendir(name) )){
+		printf("\ndirectory name is %s\n", name);
+		fprintf(stderr, "no such directory exist\n");
+		exit(0);
+	}		
+	else{
 		
 
-		else{
-		
-
-			while( entry = readdir(dir) ){
+		while( entry = readdir(dir) ){
 			
-				if(entry -> d_type == DT_REG){	
-					if(strstr(entry -> d_name, ".csv")){
-						pid = fork();
-						counter++;
-						if(pid == 0){
+			if(entry -> d_type == DT_REG){	
+				if(strstr(entry -> d_name, ".csv")){
+					pid = fork();
+					counter++;
+					if(pid == 0){
 						
 						//check the csv file 
 													
 						//sort_csv(entry -> d_name, field_name, NULL, output_path); 
 							
-						_exit(1);
-						}
-						else if(pid > 0){
-							t_pid[counter -1] = pid;
-							continue;
-						}
+					_exit(1);
+					}
+					else if(pid > 0){
+						ppid = getpid();
+						fprintf(ptr, "parent %d generates child %d in path %s to process file: %s\n", ppid, pid, name, entry -> d_name);
+						fflush(ptr);
+						t_pid[counter -1] = pid;
+						continue;
+					}
 	
-						else{
+					else{
 							//error case
-						}	
+					}	
 	
 						
-					}
 				}
+			}
 				
 
-				if (entry -> d_type == DT_DIR){
-					if(entry -> d_name[0] != '.'){
-						pid = fork();
-						counter++;
-						t_pid[counter - 1] = pid;
-						if(pid != 0){
-							t_pid[counter-1] = pid;
-							continue;
-						}
-						if (pid == 0){
-							char file[1024];
-							strcpy(file, entry -> d_name);
-							strcat(name, "/");
-							strcat(name, file);
-							navigation(name, output_path);
+			if (entry -> d_type == DT_DIR){
+				if(entry -> d_name[0] != '.'){
+					pid = fork();
+					counter++;
+					t_pid[counter - 1] = pid;
+					if(pid != 0){
+						ppid = getpid();
+						fprintf(ptr, "parent %d generates child %d in path %s to process directory: %s\n", ppid, pid, name, entry -> d_name);
+						fflush(ptr);
+						t_pid[counter-1] = pid;
+						continue;
+					}
+					if (pid == 0){
+						char file[1024];
+						strcpy(file, entry -> d_name);
+						strcat(name, "/");
+						strcat(name, file);
+						//printf("output path is %s\n", name);
+						process_num = navigation(name, output_path, ptr);
+						//printf("path %s has process_num %d\n", output_path, process_num);
 
-							_exit(1);
-						}
+						_exit(process_num);
 					}
 				}
-			}		
-		}
+			}
+		}		
+	}
 
 		
 	if( pid > 0){
@@ -105,16 +113,20 @@ int navigation(char *name, char *output_path){
 			fflush(stdout);
 			process_num += WEXITSTATUS(status);
 		}
-		process_num = process_num + 1; //the parent process
-	}
+	
+	}	
+	process_num = process_num + 1; //the parent process
 	pid_t c_pid = getpid();	
 	
 	if(c_pid != ini_pid){
-		_exit(process_num);
+		//printf("process number is %d\n", process_num);
+		return process_num;
 	}
 	
-	else
+	else{
+		//printf("process number is %d\n", process_num);
 		return process_num;
+	}
 	
 	
 }
@@ -179,31 +191,20 @@ int main(int argc, char** argv){
 	}
 	process_num = 0;
 		// use default path	
+	FILE *ptr;
 	
-	pid_t pid; 
-	//initialize the process number
-	pid = fork();
-	if(pid == 0){
-		ini_pid = getpid();
-		printf("Initial PID: %d\n", ini_pid);
-		fprintf(stdout,"PIDS of all child processes:");
-		fflush(stdout);
-		if(oflag == 0){
-			// output to the default directory
-			process_num = navigation(input_path, NULL);
-		}
-		else{
-			process_num = navigation(input_path, output_path);
-		}
-		printf("\n");
-		_exit(process_num);
-	}
-	else{
-		waitpid(pid, &status, 0);
-		process_num = WEXITSTATUS(status);
-	}
-
+	ptr = fopen("pid_infor.txt", "w");	
+	
+	ini_pid = getpid();
+	printf("Initial PID: %d\n", ini_pid);
+	fprintf(stdout,"PIDS of all child processes:");
+	fflush(stdout);	
+	process_num = navigation(input_path, output_path, ptr);
+	fprintf(stdout, "\n");
+	fflush(stdout);
+	
 	printf("Total number of processes: %d\n", process_num);	
+	fflush(stdout);
 	
 
 	return 0;
