@@ -2,15 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libgen.h>
 #include "mergesort.h"
 
 int get_fields(char *fieldlist, char ***fields_ptr, int *num_fields_ptr);
 int header_index(char *str);
-char *ofname(char *infile, char *fieldlist);
+char *ofname(char *infile, char *outpath, char *fieldlist);
 void free_matrix(char ***matrix, int num_rows, int num_cols);
 void free_header(char **header, int num_cols);
 
-int sort_csv(char *infile, char *fieldlist, char *dirname)
+int sort_csv(char *infile, char *fieldlist, char *out_path)
 {
 	char ***table;
 	char **header;
@@ -20,6 +21,12 @@ int sort_csv(char *infile, char *fieldlist, char *dirname)
 	char *outfile;
 	int i;
 	int *field_indices;
+	if (strlen(infile) < 4 || strcmp(infile + strlen(infile) - 4, ".csv") ||
+		/* wrong file extension */
+			strstr(infile, "-sorted-")) {
+		/* already sorted */
+		return 1;
+	}
 	fieldcopy = malloc((strlen(fieldlist) + 1) * sizeof(char));
 	get_fields(fieldcopy, &fields, &num_fields);
 	field_indices = malloc(num_fields * sizeof(*field_indices));
@@ -31,8 +38,8 @@ int sort_csv(char *infile, char *fieldlist, char *dirname)
 	}
 	for (i = num_fields - 1; i >= 0; i--)
 		sort_by_field(table, num_rows, num_cols, field_indices[i]);
-	outfile = ofname(infile, fieldlist);
-	chdir(dirname);
+	outfile = ofname(basename(infile), out_path, fieldlist);
+	chdir(out_path);
 	print_table(table, header, num_rows, num_cols, outfile);
 	free_matrix(table, num_rows, num_cols);
 	free_header(header, num_cols);
@@ -63,13 +70,15 @@ int get_fields(char *fieldlist, char ***fields_ptr, int *num_fields_ptr)
 	return 0;
 }
 
-char *ofname(char *infile, char *fieldlist)
+char *ofname(char *infile, char *outpath, char *fieldlist)
 {
 	char *outfile;
-	outfile = malloc((strlen(infile) + strlen(fieldlist) + 9) * sizeof(char));
-	strcpy(outfile, fieldlist);
+	outfile = malloc((strlen(outpath) + strlen(infile) + strlen(fieldlist) + 9) * sizeof(char));
+	strcpy(outfile, outpath);
+	strncat(outfile, infile, strlen(infile) - 4);
 	strcat(outfile, "-sorted-");
-	strcat(outfile, infile);
+	strcat(outfile, fieldlist);
+	strcat(outfile, ".csv");
 	return outfile;
 }
 
