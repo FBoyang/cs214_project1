@@ -85,7 +85,7 @@ char *ofname(char *infile, char *outpath, char *fieldlist)
 void free_matrix(char ***matrix, int num_rows, int num_cols)
 {
 	int i, j;
-	for (i = 0; i < rows; i++) {
+	for (i = 0; i < num_rows; i++) {
 		for (j = 0; j < num_cols; j++)
 			free(matrix[i][j]);
 		free(matrix[i]);
