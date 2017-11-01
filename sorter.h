@@ -8,7 +8,7 @@
  * and outputs the result in the directory "out_path"
  * out_path is the path to which the sorted csv should be put
  */
-void sort_csv(char *infile, char *fieldlist, char *out_path);
+void sort_csv(char *infile, char *fieldlist, char *in_path, char *out_path);
 /*
  * navigation function serves as the function to recursively traverse the directroies, 
  * first argument name is the start directory from which we begin to search. The function

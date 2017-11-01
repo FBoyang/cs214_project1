@@ -4,7 +4,6 @@
 #include <ctype.h>
 #include "mergesort.h"
 
-void matrix_enlarge(char ***matrix, int num_rows, int num_cols);
 int check_header(char *line, char ***header_ptr, char **fields, int *field_indices, int *num_cols, int num_fields);
 
 int read_csv(char ****table_ptr, char ***header_ptr, char *ifname, char **fields, int *field_indices, int *num_rows, int *num_cols_ptr, int num_fields)
@@ -35,14 +34,14 @@ int read_csv(char ****table_ptr, char ***header_ptr, char *ifname, char **fields
 		free(line);
 		return 1;
 	}
-	table = calloc(num_cols, sizeof(*table));
 	row_capacity = 1024;
-	matrix_enlarge(table, row_capacity, num_cols);
+	table = malloc(row_capacity * sizeof(*table));
 	/* this part serves to read the record and store it in the table */
 	row = 0;
 	col = 0;
 	while(getline(&line, &n, file) != -1) {
 		str_len = strlen(line) - 2;/* exclude '\n' */
+		table[row] = malloc(num_cols * sizeof(**table));
 		pstr_len = 0;
 		col = 0;
 		tokens = strtok(line, ",\r\n");
@@ -56,8 +55,8 @@ int read_csv(char ****table_ptr, char ***header_ptr, char *ifname, char **fields
 				if(tokens[0] != '"') {
 					prev_tokens = tokens;
 					pstr_len = strlen(prev_tokens);
-					table[col][row] = malloc(strlen(tokens)+2);
-					strcpy(table[col++][row], tokens);
+					table[row][col] = malloc(strlen(tokens)+2);
+					strcpy(table[row][col++], tokens);
 				} else {
 					//embeded comma
 					prev_tokens = tokens;
@@ -68,13 +67,13 @@ int read_csv(char ****table_ptr, char ***header_ptr, char *ifname, char **fields
 					strcat(special_tokens, tokens);
 					pstr_len = strlen(special_tokens) + 2; // one comma and one quotation mark miss
 					//need to be optimized
-					table[col][row] = malloc(strlen(special_tokens)+2);
-					strcpy(table[col++][row], special_tokens+1);
+					table[row][col] = malloc(strlen(special_tokens)+2);
+					strcpy(table[row][col++], special_tokens+1);
 				}
 				tokens = strtok(NULL, ",\r\n");
 			} else {
 				for(i =1; i < p_diff; i++)
-					table[col++][row] = NULL;
+					table[row][col++] = NULL;
 				prev_tokens = tokens;
 				pstr_len = 0; //since prev_tokens and tokens point to the same position
 			}
@@ -82,13 +81,13 @@ int read_csv(char ****table_ptr, char ***header_ptr, char *ifname, char **fields
 		/* check whether the last few cell are empty */
 		p_diff = line + str_len  - (strlen(prev_tokens) + prev_tokens);
 		for (i = 0; i < p_diff; i++) {
-			table[col][row] = NULL;
+			table[row][col] = NULL;
 		}
 		col = 0;	
 		row++;
 		if(row >= row_capacity -2) {
 			row_capacity *= 2;
-			matrix_enlarge(table, row_capacity, num_cols);
+			table = realloc(table, row_capacity * sizeof(*table));
 		}
 	}
 	free(line);
@@ -142,12 +141,4 @@ int check_header(char *line, char ***header_ptr, char **fields, int *field_indic
 		free(header);
 	}
 	return ret;
-}
-
-void matrix_enlarge(char ***matrix, int num_rows, int num_cols)
-{
-	int i;
-	/* dynamically allocate the matrix */
-	for (i = 0; i < num_cols; i++)
-		matrix[i] = realloc(matrix[i], num_rows * sizeof(**matrix));
 }
