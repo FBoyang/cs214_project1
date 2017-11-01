@@ -149,7 +149,12 @@ int lexcmp(char *a, int alen, char *b, int blen)
 		i++;
 		j++;
 	}
-	return 0;
+	if (i >= alen && j >= blen)
+		return 0;
+	else if (i >= alen)
+		return -1;
+	else
+		return 1;
 }
 
 int charcmp(char a, char b)
@@ -181,7 +186,10 @@ int charcmp(char a, char b)
 int strbegin(char *str)
 {
 	int i, len, begin;
-	len = strlen(str);
+	if (str)
+		len = strlen(str);
+	else
+		len = 0;
 	begin = len;
 	i = 0;
 	for (i = 0; i < len; i++) {
@@ -195,9 +203,13 @@ int strbegin(char *str)
 
 int strend(char *str)
 {
-	int i, end;
+	int i, len, end;
+	if (str)
+		len = strlen(str);
+	else
+		len = 0;
 	end = -1;
-	for (i = strlen(str) - 1; i >= 0; i--) {
+	for (i = len - 1; i >= 0; i--) {
 		if (str[i] > '\0' && !isspace(str[i])) {
 			end = i;
 			break;
