@@ -14,30 +14,23 @@ int min(int a, int b);
 int sort_by_field(char ***table, int num_rows, int num_cols, int field_index)
 {
 	int *end;
-	int *pa, *pb, *ptmp;
 	int low, middle, high;
 	int i, j;
-	char **a, **b, **tmp;
+	char ***a, ***b, ***tmp;
 	int ind;
 	/* performs a bottom-up mergesort on the table */
 	/* find already sorted regions */
 	end = malloc(num_rows * sizeof(*end));
-	pa = malloc(num_rows * sizeof(*pa));
-	pb = malloc(num_rows * sizeof(*pb));
-	for (i = 0; i < num_rows; i++) {
-		pa[i] = i;
-		pb[i] = i;
-	}
 	j = 0;
 	for (i = 1; i < num_rows; i++) {
-		if (compare(table[field_index][i - 1], table[field_index][i]) > 0) {
+		if (compare(table[i - 1][field_index], table[i][field_index]) > 0) {
 			end[j] = i;
 			j = i;
 		}
 	}
 	end[j] = num_rows;
 	/* begin actual mergesort */
-	a = table[field_index];
+	a = table;
 	b = malloc(num_rows * sizeof(*b));
 	memcpy(b, a, num_rows * sizeof(*a));
 	ind = 0;
@@ -48,27 +41,23 @@ int sort_by_field(char ***table, int num_rows, int num_cols, int field_index)
 		i = low;
 		j = middle;
 		while (i < middle && j < high) {
-			if (compare(a[i], a[j]) <= 0) {
+			if (compare(a[i][field_index], a[j][field_index]) <= 0) {
 				b[ind] = a[i];
-				pb[ind] = pa[i];
 				ind++;
 				i++;
 			} else {
 				b[ind] = a[j];
-				pb[ind] = pa[j];
 				ind++;
 				j++;
 			}
 		}
 		while (i < middle) {
 			b[ind] = a[i];
-			pb[ind] = pa[i];
 			ind++;
 			i++;
 		}
 		while (j < high) {
 			b[ind] = a[j];
-			pb[ind] = pa[j];
 			ind++;
 			j++;
 		}
@@ -79,31 +68,13 @@ int sort_by_field(char ***table, int num_rows, int num_cols, int field_index)
 				b[ind] = a[ind];
 			ind = 0;
 			tmp = a;
-			ptmp = pa;
 			a = b;
-			pa = pb;
 			b = tmp;
-			pb = ptmp;
 		}
 	}
-	if (table[field_index] != a) {
-		table[field_index] = a;
-	}
-	/* replicate changes to sorted column in all other columns */
-	tmp = malloc(num_rows * sizeof(*tmp));
-	for (i = 0; i < num_cols; i++) {
-		if (i == field_index)
-			continue;
-		for (j = 0; j < num_rows; j++)
-			tmp[j] = table[i][pa[j]];
-		for (j = 0; j < num_rows; j++)
-			table[i][j] = tmp[j];
-	}
+	table = a;
 	free(end);
 	free(b);
-	free(tmp);
-	free(pa);
-	free(pb);
 	return 0;
 }
 
