@@ -6,7 +6,7 @@
 #include<unistd.h>
 #include"sorter.h"
 #include<libgen.h>
-
+#include<sys/wait.h>
 
 /*
 * navigation function serves as the function to recursively traverse the directroies,
@@ -58,7 +58,7 @@ int navigation(char *name, char *output_path, FILE *ptr, int indent, char* dir_n
 
 						//check the csv file 
 
-						//sort_csv(entry -> d_name, field_name, NULL, output_path); 
+						sort_csv(entry -> d_name, field_name, name, output_path); 
 
 						_exit(1);
 					}
@@ -164,7 +164,7 @@ int navigation(char *name, char *output_path, FILE *ptr, int indent, char* dir_n
 	}
 	process_num = process_num + 1; //the parent process
 	pid_t c_pid = getpid();
-
+	closedir(dir);
 	if (c_pid != ini_pid) {
 		//printf("process number is %d\n", process_num);
 		return process_num;
@@ -201,7 +201,7 @@ int main(int argc, char** argv) {
 	}
 	}*/
 	char input_path[1024];
-	char *output_path;
+	char *output_path = NULL;
 	getcwd(input_path, 1024);
 	while ((c = getopt(argc, argv, "c: d: o:")) != -1) {
 		switch (c)
@@ -249,6 +249,7 @@ int main(int argc, char** argv) {
 	fprintf(stdout, "PIDS of all child processes:");
 	fflush(stdout);
 	//printf("parent is %s\n", entry -> d_name);
+	printf("output path is %s\n", output_path);
 	process_num = navigation(input_path, output_path, ptr, indent, file_name);
 	fprintf(stdout, "\n");
 	fflush(stdout);

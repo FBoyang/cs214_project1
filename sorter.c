@@ -7,11 +7,12 @@
 
 int get_fields(char *fieldlist, char ***fields_ptr, int *num_fields_ptr);
 int header_index(char *str);
-char *ofname(char *infile, char *outpath, char *fieldlist);
+char *ofname(char *infile, char *fieldlist);
+char *ifname(char *inpath, char *infile);
 void free_matrix(char ***matrix, int num_rows, int num_cols);
 void free_header(char **header, int num_cols);
 
-int sort_csv(char *infile, char *fieldlist, char *out_path)
+int sort_csv(char *infile, char *fieldlist, char *in_path, char *out_path)
 {
 	char ***table;
 	char **header;
@@ -19,6 +20,7 @@ int sort_csv(char *infile, char *fieldlist, char *out_path)
 	char **fields;
 	int num_rows, num_cols, num_fields;
 	char *outfile;
+	char *infilepath;
 	int i;
 	int *field_indices;
 	if (strlen(infile) < 4 || strcmp(infile + strlen(infile) - 4, ".csv") ||
@@ -28,23 +30,28 @@ int sort_csv(char *infile, char *fieldlist, char *out_path)
 		return 1;
 	}
 	fieldcopy = malloc((strlen(fieldlist) + 1) * sizeof(char));
+	strcpy(fieldcopy, fieldlist);
 	get_fields(fieldcopy, &fields, &num_fields);
 	field_indices = malloc(num_fields * sizeof(*field_indices));
-	if (read_csv(&table, &header, infile, fields, field_indices, &num_rows, &num_cols, num_fields)) {
+	infilepath = ifname(in_path, infile);
+	if (read_csv(&table, &header, infilepath, fields, field_indices, &num_rows, &num_cols, num_fields)) {
 		free(fieldcopy);
 		free(fields);
 		free(field_indices);
+		free(infilepath);
 		return 1;
 	}
 	for (i = num_fields - 1; i >= 0; i--)
 		sort_by_field(table, num_rows, num_cols, field_indices[i]);
-	outfile = ofname(basename(infile), out_path, fieldlist);
-	chdir(out_path);
+	outfile = ofname(infile, fieldlist);
+	if (out_path)
+		chdir(out_path);
 	print_table(table, header, num_rows, num_cols, outfile);
 	free_matrix(table, num_rows, num_cols);
 	free_header(header, num_cols);
 	free(fields);
 	free(fieldcopy);
+	free(infilepath);
 	free(outfile);
 	return 0;
 }
@@ -70,16 +77,28 @@ int get_fields(char *fieldlist, char ***fields_ptr, int *num_fields_ptr)
 	return 0;
 }
 
-char *ofname(char *infile, char *outpath, char *fieldlist)
+char *ofname(char *infile, char *fieldlist)
 {
+	int baselen;
 	char *outfile;
-	outfile = malloc((strlen(outpath) + strlen(infile) + strlen(fieldlist) + 9) * sizeof(char));
-	strcpy(outfile, outpath);
-	strncat(outfile, infile, strlen(infile) - 4);
+	baselen = strlen(infile) - 4;
+	outfile = malloc((strlen(infile) + strlen(fieldlist) + 9) * sizeof(char));
+	strncpy(outfile, infile, baselen);
+	outfile[baselen] = '\0';
 	strcat(outfile, "-sorted-");
 	strcat(outfile, fieldlist);
 	strcat(outfile, ".csv");
 	return outfile;
+}
+
+char *ifname(char *inpath, char *infile)
+{
+	char *infilepath;
+	infilepath = malloc((strlen(inpath) + strlen(infile) + 2) * sizeof(char));
+	strcpy(infilepath, inpath);
+	strcat(infilepath, "/");
+	strcat(infilepath, infile);
+	return infilepath;
 }
 
 void free_matrix(char ***matrix, int num_rows, int num_cols)

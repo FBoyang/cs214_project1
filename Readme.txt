@@ -8,8 +8,8 @@ directory, the parent would wait all its children whose pids are stored in temp_
 considered since my temp_list is a local variable, which means any parent would only wait for its own child. 
 Also, since the function is bottom up, parents always wait for the child, no orphan or zombie possible
 
-Note, I add global varibale sort_num to record the number of fileds on which our sort should be based.
-I changed the second argument in sort_csv function to a double pointer type since we sometimes need to sort
-serveral fileds. I add another argument output_path in sort_csv function since we may want to output all the 
-file into a specific directory;
-  
+For the Extra credit part, I manually create a hierachy tree that present all the parents and children relations.
+Basically, parents are always present in the left side, and if they have children, their children would present on their right.
+If a parent has more than one child, then I would leave enough rows between this pid and its siblings in order to 
+be able to store all its children. 
+ 
