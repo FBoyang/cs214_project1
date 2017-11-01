@@ -23,7 +23,7 @@ int print_table(char ***table, char **header, int num_rows, int num_cols, char *
 	fputs("\r\n", outfile);
 	for (i = 0; i < num_rows; i++) {
 		for (j = 0; j < num_cols; j++) {
-			str = table[j][i];
+			str = table[i][j];
 			if (str) {
 				if (escaped(str))
 					fprintf(outfile, "\"%s\"", str);
