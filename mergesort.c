@@ -32,7 +32,6 @@ int sort_by_field(char ***table, int num_rows, int num_cols, int field_index)
 	/* begin actual mergesort */
 	a = table;
 	b = malloc(num_rows * sizeof(*b));
-	memcpy(b, a, num_rows * sizeof(*a));
 	ind = 0;
 	while (end[0] != num_rows) {
 		low = ind;
